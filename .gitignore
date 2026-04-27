@@ -8,5 +8,6 @@ notebooks/*
 /checkpoints/
 /pretrained/
 /data/
+/datasets/
 lightning_logs/
 *-Copy*

@@ -102,7 +102,7 @@ if __name__ == '__main__':
         
         B = ds.shape[0]
         Ld_ = torch.zeros(B,3,device=device)
-        batch_size = 10240*64//spp
+        batch_size = 2048*64//spp  # lowered the batch size to reduce memory usage
 
         # batched diffuse shading calculation
         for b in range(math.ceil(B*1.0/batch_size)):
@@ -164,7 +164,7 @@ if __name__ == '__main__':
             Ls1_ = torch.zeros(B,3,device=device)
             
             # batched specular shading calculation
-            batch_size = 10240*64//spp
+            batch_size = 2048*64//spp   #lowering batch size again
             for b in range(math.ceil(B*1.0/batch_size)):
                 b0 = b*batch_size
                 b1 = min(b0+batch_size,B)

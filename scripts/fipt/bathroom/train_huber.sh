@@ -10,7 +10,7 @@ DATASET='synthetic'
 # scene name
 SCENE='bathroom'
 LDR_IMG_DIR='Image'
-EXP='fipt_syn_bathroom'
+EXP='fipt_syn_bathroom_huber'
 VAL_FRAME=10 
 CRF_BASIS=3
 # whether has part segmentation
@@ -19,6 +19,9 @@ SPP=32
 spp=16
 RES_SCALE=0.25
 BATCH_SIZE=2048
+
+# Reuse the baseline's shading cache (identical scene/geometry/emitters).
+BASELINE_SHADING='outputs/fipt_syn_bathroom/shading'
 
 # bake surface light field (SLF)
 python slf_bake.py --scene $DATASET_ROOT$SCENE\
@@ -37,7 +40,7 @@ python initialize.py --experiment_name $EXP --max_epochs 6 \
         --voxel_path checkpoints/$EXP/bake/vslf.npz \
         --emitter_path checkpoints/$EXP/bake/emitter.pth \
         --has_part $HAS_PART --ldr_img_dir $LDR_IMG_DIR  --val_frame $VAL_FRAME\
-        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 2 \
+        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 0 \
         --SPP $SPP --spp $spp --crf_basis $CRF_BASIS
 
 mv checkpoints/$EXP/last.ckpt checkpoints/$EXP/init.ckpt
@@ -50,24 +53,16 @@ python extract_emitter_ldr.py --mode update\
         --ckpt checkpoints/$EXP/init.ckpt\
         --dataset $DATASET --ldr_img_dir $LDR_IMG_DIR
 
-python bake_shading.py \
-        --scene $DATASET_ROOT$SCENE --dataset $DATASET \
-        --ldr_img_dir $LDR_IMG_DIR \
-        --res_scale $RES_SCALE \
-        --slf_path checkpoints/$EXP/bake/vslf.npz \
-        --emitter_path checkpoints/$EXP/bake/emitter.pth \
-        --output outputs/$EXP/shading 
-
-# optimize BRDF, CRF
+# optimize BRDF, CRF (using Huber loss via modified train_brdf_crf.py)
 python train_brdf_crf.py --experiment_name $EXP \
         --max_epochs 4 --dir_val val_0 \
         --ckpt_path checkpoints/$EXP/init.ckpt \
         --voxel_path checkpoints/$EXP/bake/vslf.npz \
         --emitter_path checkpoints/$EXP/bake/emitter.pth \
-        --cache_dir outputs/$EXP/shading \
+        --cache_dir $BASELINE_SHADING \
         --dataset $DATASET $DATASET_ROOT$SCENE \
         --has_part $HAS_PART --ldr_img_dir $LDR_IMG_DIR  --val_frame $VAL_FRAME\
-        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 2 \
+        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 0 \
         --SPP $SPP --spp $spp --lp 0.005 --la 0.01 --l_crf_weight 0.001 --crf_basis $CRF_BASIS
 
 mv checkpoints/$EXP/last.ckpt checkpoints/$EXP/last_0.ckpt
@@ -87,7 +82,7 @@ python train_emitter.py --experiment_name $EXP \
         --emitter_path checkpoints/$EXP/bake/emitter.pth \
         --dataset $DATASET $DATASET_ROOT$SCENE \
         --has_part $HAS_PART --ldr_img_dir $LDR_IMG_DIR  --val_frame $VAL_FRAME\
-        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 2 \
+        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 0 \
         --SPP $SPP --spp $spp --crf_basis $CRF_BASIS
 
 mv checkpoints/$EXP/last.ckpt checkpoints/$EXP/last_0.ckpt
@@ -100,26 +95,16 @@ python extract_emitter_ldr.py --mode update\
         --ckpt checkpoints/$EXP/last_0.ckpt\
         --dataset $DATASET --ldr_img_dir $LDR_IMG_DIR
 
-# refine shading 
-python refine_shading.py \
-        --scene $DATASET_ROOT$SCENE --dataset $DATASET \
-        --ldr_img_dir $LDR_IMG_DIR \
-        --res_scale $RES_SCALE \
-        --slf_path checkpoints/$EXP/bake/vslf_0.npz \
-        --emitter_path checkpoints/$EXP/bake/emitter.pth \
-        --ckpt checkpoints/$EXP/last_0.ckpt \
-        --output outputs/$EXP/shading
-
-# optimize BRDF, CRF
+# optimize BRDF, CRF (final round)
 python train_brdf_crf.py --experiment_name $EXP \
         --max_epochs 4 --dir_val val_1 \
         --ckpt_path checkpoints/$EXP/init.ckpt \
         --voxel_path checkpoints/$EXP/bake/vslf_0.npz \
         --emitter_path checkpoints/$EXP/bake/emitter.pth \
-        --cache_dir outputs/$EXP/shading \
+        --cache_dir $BASELINE_SHADING \
         --dataset $DATASET $DATASET_ROOT$SCENE \
         --has_part $HAS_PART --ldr_img_dir $LDR_IMG_DIR  --val_frame $VAL_FRAME\
-        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 2 \
+        --res_scale $RES_SCALE --batch_size $BATCH_SIZE --val_step 1000 --num_workers 0 \
         --SPP $SPP --spp $spp --lp 0.005 --la 0.01 --l_crf_weight 0.001 --crf_basis $CRF_BASIS
 
 mv checkpoints/$EXP/last.ckpt checkpoints/$EXP/last_1.ckpt

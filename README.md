@@ -20,7 +20,46 @@
 
 ![teaser](assets/teaser_cvpr25.png)
 
-## Setup
+---
+
+## CS 547 Course Project — SUNY Polytechnic Institute
+
+This is a fork of the [IRIS (Inverse Rendering of Indoor Scenes)](https://irisldr.github.io/) repository, created for a CS 547 class project at SUNY Polytechnic Institute.
+
+**Team Members:** Mian Danyal
+
+### Modifications
+
+The modification made to the original codebase:
+
+- **Huber (Smooth L1) Loss for Reconstruction:** The core reconstruction loss in `initialize.py` and `train_brdf_crf.py` was changed from MSE to a Huber loss (`utils/loss.py::huber_loss`). The Huber loss is more robust to outlier pixels caused by noisy Monte Carlo path tracing at low samples-per-pixel (SPP). It behaves like MSE for small errors (< δ=0.1) but switches to L1 for large errors, preventing outliers from dominating the gradient.
+
+- **RTX 3070 Memory Optimizations:** Training and rendering parameters were adapted for an 8GB VRAM GPU (RTX 3070): `RES_SCALE=0.25`, `SPP=32`, `BATCH_SIZE=2048`, and reduced `num_workers`.
+
+### Running the Experiments
+
+All experiments use the scripts in `scripts/fipt/bathroom/`. Activate the conda environment first:
+```bash
+conda activate iris
+```
+
+**Baseline (MSE loss):**
+```bash
+bash scripts/fipt/bathroom/train.sh      # Train
+bash scripts/fipt/bathroom/render.sh     # Render & evaluate (prints PSNR/SSIM)
+```
+
+**Experiment 2 — Huber loss:**
+```bash
+bash scripts/fipt/bathroom/train_huber.sh    # Train with Huber loss
+bash scripts/fipt/bathroom/render_huber.sh   # Render & evaluate (prints PSNR/SSIM)
+```
+
+Results are saved under `outputs/fipt_syn_bathroom/` (baseline) and `outputs/fipt_syn_bathroom_huber/` (Huber).
+
+---
+
+
 The code has been tested on:
 - **OS**: Ubuntu 22.04.4 LTS
 - **GPU**: NVIDIA GeForce RTX 4090

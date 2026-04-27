@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # data folder
-DATASET_ROOT='/hdd/datasets/fipt/indoor_synthetic/'
+DATASET_ROOT='datasets/fipt/indoor_synthetic/'
 DATASET='synthetic'
 # scene name
 SCENE='bathroom'
@@ -15,8 +15,9 @@ VAL_FRAME=10
 CRF_BASIS=3
 # whether has part segmentation
 HAS_PART=1
-SPP=256
+SPP=32
 spp=16
+RES_SCALE=0.25
 
 python render.py --experiment_name $EXP --device 0\
         --ckpt last_1.ckpt \
@@ -25,6 +26,7 @@ python render.py --experiment_name $EXP --device 0\
         --output_path 'outputs/'$EXP'/output'\
         --split 'val'\
         --ldr_img_dir $LDR_IMG_DIR \
+        --res_scale $RES_SCALE --num_workers 2 \
         --SPP $SPP --spp $spp --crf_basis $CRF_BASIS 
 
 python render_video.py --experiment_name $EXP --device 0\
@@ -34,6 +36,7 @@ python render_video.py --experiment_name $EXP --device 0\
         --output_path 'outputs/'$EXP'/video'\
         --split 'val'\
         --ldr_img_dir $LDR_IMG_DIR \
+        --res_scale $RES_SCALE --num_workers 2 \
         --SPP $SPP --spp $spp --crf_basis $CRF_BASIS
 
 # relighting
@@ -42,7 +45,8 @@ python render_relight.py --experiment_name $EXP --device 0\
         --dataset $DATASET $DATASET_ROOT$SCENE\
         --emitter_path checkpoints/$EXP/bake\
         --output_path 'outputs/'$EXP'/relight/video_relight_0'\
-        --split 'test'\
+        --split 'val'\
         --ldr_img_dir $LDR_IMG_DIR \
         --light_cfg 'configs/fipt/bathroom/relight_0.yaml' \
-        --SPP $SPP --spp $spp --crf_basis $CRF_BASIS 
+        --res_scale $RES_SCALE --num_workers 2 \
+        --SPP $SPP --spp $spp --crf_basis $CRF_BASIS

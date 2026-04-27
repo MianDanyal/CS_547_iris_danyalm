@@ -41,3 +41,12 @@ def scale_shift_invariant_mse(source, target):
     source_transformed = source * scale + shift
     loss = F.mse_loss(source_transformed, target)
     return loss
+
+def huber_loss(pred, target, delta=0.1):
+    #huberloss  
+    #Args:
+    #    pred: predicted pixel values
+    #    target: ground truth pixel values  
+    #    delta: threshold for switching from quadratic to linear 
+
+    return F.smooth_l1_loss(pred, target, beta=delta)

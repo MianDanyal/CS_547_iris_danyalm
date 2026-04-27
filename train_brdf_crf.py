@@ -31,7 +31,7 @@ from utils.dataset import InvRealDatasetLDR,RealDatasetLDR,InvSyntheticDatasetLD
 from utils.dataset.scannetpp.dataset import Scannetpp, InvScannetpp
 from utils.ops import *
 from utils.path_tracing import ray_intersect, path_tracing, path_tracing_single
-from utils.loss import scale_shift_invariant_mse, scale_invariant_mse
+from utils.loss import scale_shift_invariant_mse, scale_invariant_mse, huber_loss  #huber instead of mse
 from model.mlps import ImplicitMLP
 from model.brdf import NGPBRDF
 from model.emitter import SLFEmitter, SLFEmitterLearn
@@ -204,7 +204,7 @@ class ModelTrainer(pl.LightningModule):
 
         exposure = batch['exposure'][valid]
         rgbs_ldr = self.model_crf(L, exposure)
-        loss_c = NF.mse_loss(rgbs_ldr, rgbs_gt)
+        loss_c = huber_loss(rgbs_ldr, rgbs_gt)
         
         # diffuse regualrization
         loss_d = self.hparams.ld * ((roughness-1).abs().mean()+metallic.mean())

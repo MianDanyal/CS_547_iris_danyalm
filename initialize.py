@@ -29,6 +29,7 @@ from utils.dataset import InvRealDatasetLDR,RealDatasetLDR,InvSyntheticDatasetLD
 from utils.dataset.scannetpp.dataset import Scannetpp, InvScannetpp
 from utils.ops import *
 from utils.path_tracing import ray_intersect, path_tracing, path_tracing_single
+from utils.loss import huber_loss
 from model.mlps import ImplicitMLP
 from model.brdf import NGPBRDF
 from model.emitter import SLFEmitter, SLFEmitterLearn
@@ -181,7 +182,7 @@ class ModelTrainer(pl.LightningModule):
         
         exposure = batch['exposure']
         rgbs_ldr = self.model_crf(L, exposure)
-        loss_c = NF.mse_loss(rgbs_ldr, rgbs_gt)
+        loss_c = huber_loss(rgbs_ldr, rgbs_gt)  #using huber
         for param in self.material.parameters():
             param.requires_grad = True 
 
